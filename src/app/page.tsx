@@ -20,9 +20,13 @@ export default function Home() {
       email: z.string().min(1, 'Email is required').email('Invalid email address'),
       isChecked: z.boolean().optional(),
       extraOptions: z.array(z.string()).min(1, 'Select At least one options'),
+      extraDetails: z.string().min(1, 'Please select at least one details option'),
       bikeName: z.string().optional(),
       carName: z.string().optional(),
       boatName: z.string().optional(),
+      personalData: z.string().optional(),
+      educationalData: z.string().optional(),
+      careerData: z.string().optional(),
     })
     .and(additionalSchema)
     .refine((data) => !data.extraOptions.includes('Bike') || !!data.bikeName, {
@@ -37,6 +41,44 @@ export default function Home() {
       message: 'Boat name is required',
       path: ['boatName'],
     })
+    .superRefine((data, ctx) => {
+      if (data.extraDetails === 'personal' && !data.personalData) {
+        ctx.addIssue({
+          path: ['personalData'],
+          message: 'Personal Data is required',
+          code: 'custom',
+        })
+      }
+
+      if (data.extraDetails === 'education' && !data.educationalData) {
+        ctx.addIssue({
+          path: ['educationalData'],
+          message: 'Education Info is required',
+          code: 'custom',
+        })
+      }
+
+      if (data.extraDetails === 'job' && !data.careerData) {
+        ctx.addIssue({
+          path: ['careerData'],
+          message: 'Career Info is required',
+          code: 'custom',
+        })
+      }
+    })
+
+  // .refine((data) => data.extraDetails === 'personal' || !!data.personalData, {
+  //   message: 'Personal Data is required',
+  //   path: ['personalData'],
+  // })
+  // .refine((data) => data.extraDetails === 'education' || !!data.educationalData, {
+  //   message: 'Education Info is required',
+  //   path: ['educationData'],
+  // })
+  // .refine((data) => data.extraDetails === 'career' || !!data.careerData, {
+  //   message: 'Career Info is required',
+  //   path: ['careerData'],
+  // })
 
   type DataType = z.infer<typeof schema>
 
@@ -57,6 +99,7 @@ export default function Home() {
 
   const isChecked = watch('isChecked')
   const extraValues = watch('extraOptions')
+  const extraDetails = watch('extraDetails')
 
   const onSubmit = (data: DataType) => {
     console.log('Data is', data)
@@ -117,7 +160,74 @@ export default function Home() {
             )}
           </div>
         )}
+        <select
+          {...register('extraDetails')}
+          className='border border-gray-300 p-4 rounded-md'
+          defaultValue=''
+        >
+          <option value='' disabled>
+            Select a Details Option
+          </option>
+          <option value='personal'>Personal Info</option>
+          <option value='education'>Education Info</option>
+          <option value='job'>Job Info</option>
+        </select>
 
+        {/* This section for more details */}
+        <div>
+          {extraDetails === 'personal' && (
+            <div>
+              <label className='text-sm font-medium text-gray-700'>Write Something Personal</label>
+              <input
+                {...register('personalData')}
+                type='text'
+                placeholder='Your personal Info'
+                className='border border-gray-300 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400 transition w-full'
+              />
+              {errors.personalData && (
+                <span className='text-sm text-red-500'>{errors.personalData.message}</span>
+              )}{' '}
+            </div>
+          )}
+
+          {extraDetails === 'education' && (
+            <div>
+              <label className='text-sm font-medium text-gray-700'>
+                Write about your education
+              </label>
+              <input
+                {...register('educationalData')}
+                type='text'
+                placeholder='Your education background'
+                className='border border-gray-300 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400 transition w-full'
+              />
+              {errors.educationalData && (
+                <span className='text-sm text-red-500'>{errors.educationalData.message}</span>
+              )}{' '}
+            </div>
+          )}
+
+          {extraDetails === 'job' && (
+            <div>
+              <label className='text-sm font-medium text-gray-700'>
+                Write Something about your Career
+              </label>
+              <input
+                {...register('careerData')}
+                type='text'
+                placeholder='Your Current Job'
+                className='border border-gray-300 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400 transition w-full'
+              />
+              {errors.careerData && (
+                <span className='text-sm text-red-500'>{errors.careerData.message}</span>
+              )}{' '}
+            </div>
+          )}
+        </div>
+
+        {errors.extraDetails && (
+          <p className='text-red-500 font-bold'>{errors?.extraDetails?.message}</p>
+        )}
         {/* Extra Options */}
         <div className='flex flex-col gap-2'>
           <span className='text-sm font-medium text-gray-700'>Select Vehicles</span>
