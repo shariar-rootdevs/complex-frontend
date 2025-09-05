@@ -1,8 +1,6 @@
 'use client'
 import { zodResolver } from '@hookform/resolvers/zod'
-
 import { useForm } from 'react-hook-form'
-
 import * as z from 'zod'
 
 export default function Home() {
@@ -16,23 +14,6 @@ export default function Home() {
     }),
   ])
 
-  // const extraSchema = z.discriminatedUnion('extraOptions', [
-  //   z.object({
-  //     extraOptions: z.literal('bike'),
-  //     bikeName: z.string().min(1, 'Bike Name is required'),
-  //   }),
-
-  //   z.object({
-  //     extraOptions: z.literal('car'),
-  //     carName: z.string().min(1, 'Car Name is required'),
-  //   }),
-
-  //   z.object({
-  //     extraOptions: z.literal('boat'),
-  //     boatName: z.string().min(1, 'Car Name is required'),
-  //   }),
-  // ])
-
   const schema = z
     .object({
       name: z.string().min(5, 'Name must be at least 10 characters'),
@@ -42,12 +23,11 @@ export default function Home() {
       bikeName: z.string().optional(),
       carName: z.string().optional(),
       boatName: z.string().optional(),
-      // selectOptions: z.string().optional(),
     })
     .and(additionalSchema)
     .refine((data) => !data.extraOptions.includes('Bike') || !!data.bikeName, {
       message: 'Bike name is required',
-      path: ['bikeName'], // correct spelling
+      path: ['bikeName'],
     })
     .refine((data) => !data.extraOptions.includes('Car') || !!data.carName, {
       message: 'Car name is required',
@@ -86,12 +66,14 @@ export default function Home() {
     <div className='flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100'>
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className='w-full max-w-xl bg-white shadow-xl rounded-2xl p-8 flex flex-col gap-5'
+        className='w-full max-w-xl bg-white shadow-xl rounded-2xl p-8 flex flex-col gap-6'
       >
         <h1 className='text-4xl font-bold text-center text-gray-800'>Welcome Back 👋</h1>
         <p className='text-sm text-gray-500 text-center'>Please login to continue</p>
 
+        {/* Name */}
         <div className='flex flex-col gap-1'>
+          <label className='text-sm font-medium text-gray-700'>Name</label>
           <input
             {...register('name')}
             type='text'
@@ -101,7 +83,9 @@ export default function Home() {
           {errors.name && <span className='text-sm text-red-500'>{errors.name.message}</span>}
         </div>
 
+        {/* Email */}
         <div className='flex flex-col gap-1'>
+          <label className='text-sm font-medium text-gray-700'>Email</label>
           <input
             {...register('email')}
             type='email'
@@ -111,83 +95,72 @@ export default function Home() {
           {errors.email && <span className='text-sm text-red-500'>{errors.email.message}</span>}
         </div>
 
+        {/* Checkbox for more options */}
         <div className='flex items-center gap-2'>
           <input className='h-4 w-4' type='checkbox' {...register('isChecked')} />
-          <label htmlFor='isChecked'>Chose More Options</label>
+          <label htmlFor='isChecked' className='text-sm font-medium text-gray-700'>
+            Provide Your Address
+          </label>
         </div>
 
-        <div>
-          <div>
+        {isChecked && (
+          <div className='flex flex-col gap-1'>
+            <label className='text-sm font-medium text-gray-700'>Address</label>
             <input
-              type='checkbox'
-              id='vehicle1'
-              value='Bike'
-              className='h-3 w-3'
-              {...register('extraOptions')}
+              {...register('address')}
+              type='text'
+              placeholder='Your Address'
+              className='border border-gray-300 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400 transition w-full'
             />
-            <label className='text-md ml-1' htmlFor='vehicle1'>
+            {'address' in errors && errors.address && (
+              <span className='text-sm text-red-500'>{errors.address.message}</span>
+            )}
+          </div>
+        )}
+
+        {/* Extra Options */}
+        <div className='flex flex-col gap-2'>
+          <span className='text-sm font-medium text-gray-700'>Select Vehicles</span>
+          <div className='flex flex-col gap-1 ml-2'>
+            <label className='flex items-center gap-2'>
+              <input
+                type='checkbox'
+                value='Bike'
+                className='h-4 w-4'
+                {...register('extraOptions')}
+              />
               I have a bike
             </label>
-          </div>
-
-          <div>
-            <input
-              type='checkbox'
-              id='vehicle2'
-              value='Car'
-              className='h-3 w-3'
-              {...register('extraOptions')}
-            />
-            <label className='text-md ml-1' htmlFor='vehicle2'>
+            <label className='flex items-center gap-2'>
+              <input
+                type='checkbox'
+                value='Car'
+                className='h-4 w-4'
+                {...register('extraOptions')}
+              />
               I have a car
             </label>
-          </div>
-
-          <div>
-            <input
-              type='checkbox'
-              id='vehicle3'
-              value='Boat'
-              className='h-3 w-3'
-              {...register('extraOptions')}
-            />
-            <label className='text-md ml-1' htmlFor='vehicle3'>
+            <label className='flex items-center gap-2'>
+              <input
+                type='checkbox'
+                value='Boat'
+                className='h-4 w-4'
+                {...register('extraOptions')}
+              />
               I have a boat
             </label>
           </div>
-        </div>
-
-        {errors?.extraOptions && (
-          <p className='text-sm text-red-500'>{errors.extraOptions.message}</p>
-        )}
-
-        <div>
-          {isChecked && (
-            <div className='flex flex-col gap-1'>
-              <input
-                {...register('address')}
-                type='text'
-                placeholder='Your Address'
-                className='border border-gray-300 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400 transition w-full'
-              />
-              {'address' in errors && errors.address && (
-                <span className='text-sm text-red-500'>{errors.address.message}</span>
-              )}
-            </div>
-
-            // <select
-            //   className='w-full py-2 border border-gray-100 px-4'
-            //   {...register('selectOptions')}
-            // >
-            //   <option value='single'>Single</option>
-            //   <option value='multiple'>Multiple</option>
-            //   <option value='others'>Others</option>
-            // </select>
+          {errors?.extraOptions && (
+            <p className='text-sm text-red-500'>{errors.extraOptions.message}</p>
           )}
         </div>
 
+        {/* Address (if checked) */}
+
+        {/* Bike Name */}
         {extraValues.includes('Bike') && (
           <div className='flex flex-col gap-1'>
+            <label className='text-sm font-medium text-gray-700'>Bike Name</label>
             <input
               {...register('bikeName')}
               type='text'
@@ -200,8 +173,10 @@ export default function Home() {
           </div>
         )}
 
+        {/* Car Name */}
         {extraValues.includes('Car') && (
           <div className='flex flex-col gap-1'>
+            <label className='text-sm font-medium text-gray-700'>Car Name</label>
             <input
               {...register('carName')}
               type='text'
@@ -214,8 +189,10 @@ export default function Home() {
           </div>
         )}
 
+        {/* Boat Name */}
         {extraValues.includes('Boat') && (
           <div className='flex flex-col gap-1'>
+            <label className='text-sm font-medium text-gray-700'>Boat Name</label>
             <input
               {...register('boatName')}
               type='text'
@@ -228,6 +205,7 @@ export default function Home() {
           </div>
         )}
 
+        {/* Submit */}
         <button
           type='submit'
           className='w-full bg-green-500 hover:bg-green-600 text-white font-medium py-3 rounded-xl shadow-md transition'
