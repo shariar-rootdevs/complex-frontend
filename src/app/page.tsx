@@ -1,6 +1,7 @@
 'use client'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
+import { Trash } from 'lucide-react'
+import { useFieldArray, useForm } from 'react-hook-form'
 import * as z from 'zod'
 
 export default function Home() {
@@ -27,6 +28,7 @@ export default function Home() {
       personalData: z.string().optional(),
       educationalData: z.string().optional(),
       careerData: z.string().optional(),
+      multihobby: z.array(z.object({ game: z.string(), favouritePlayer: z.string() })),
     })
     .and(additionalSchema)
     .refine((data) => !data.extraOptions.includes('Bike') || !!data.bikeName, {
@@ -48,6 +50,33 @@ export default function Home() {
           message: 'Personal Data is required',
           code: 'custom',
         })
+      }
+
+      if (data.extraDetails === 'personal') {
+        if (data.multihobby.length <= 0) {
+          ctx.addIssue({
+            path: ['multihobby'],
+            message: 'At least One hobby is required',
+            code: 'custom',
+          })
+        } else {
+          data.multihobby.forEach((hobby, index) => {
+            if (!hobby.game?.trim()) {
+              ctx.addIssue({
+                path: ['multihobby', index, 'game'],
+                message: 'Game is required',
+                code: 'custom',
+              })
+            }
+            if (!hobby.favouritePlayer?.trim()) {
+              ctx.addIssue({
+                path: ['multihobby', index, 'favouritePlayer'],
+                message: 'Player Name is required',
+                code: 'custom',
+              })
+            }
+          })
+        }
       }
 
       if (data.extraDetails === 'education' && !data.educationalData) {
@@ -86,6 +115,7 @@ export default function Home() {
     register,
     handleSubmit,
     watch,
+    control,
     formState: { errors },
   } = useForm<DataType>({
     resolver: zodResolver(schema),
@@ -94,12 +124,31 @@ export default function Home() {
       email: '',
       isChecked: false,
       extraOptions: [],
+      multihobby: [
+        {
+          game: 'Cricket',
+          favouritePlayer: 'AB Devillers',
+        },
+
+        {
+          game: 'football',
+          favouritePlayer: 'Messi',
+        },
+      ],
     },
   })
 
   const isChecked = watch('isChecked')
   const extraValues = watch('extraOptions')
   const extraDetails = watch('extraDetails')
+
+  const allhobies = useFieldArray({ control, name: 'multihobby' })
+
+  const addNewHobby = () => {
+    allhobies.append({ game: '', favouritePlayer: '' })
+  }
+
+  console.log(errors)
 
   const onSubmit = (data: DataType) => {
     console.log('Data is', data)
@@ -109,7 +158,7 @@ export default function Home() {
     <div className='flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100'>
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className='w-full max-w-xl bg-white shadow-xl rounded-2xl p-8 flex flex-col gap-6'
+        className='w-full max-w-2xl bg-white shadow-xl rounded-2xl p-8 flex flex-col gap-6'
       >
         <h1 className='text-4xl font-bold text-center text-gray-800'>Welcome Back 👋</h1>
         <p className='text-sm text-gray-500 text-center'>Please login to continue</p>
@@ -175,20 +224,90 @@ export default function Home() {
 
         {/* This section for more details */}
         <div>
-          {extraDetails === 'personal' && (
-            <div>
-              <label className='text-sm font-medium text-gray-700'>Write Something Personal</label>
-              <input
-                {...register('personalData')}
-                type='text'
-                placeholder='Your personal Info'
-                className='border border-gray-300 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400 transition w-full'
-              />
-              {errors.personalData && (
-                <span className='text-sm text-red-500'>{errors.personalData.message}</span>
-              )}{' '}
-            </div>
-          )}
+          <div>
+            {extraDetails === 'personal' && (
+              <div className='flex flex-col gap-4'>
+                <div>
+                  <label className='text-sm font-medium text-gray-700'>
+                    Write Some Personal Interest
+                  </label>
+                  <input
+                    {...register('personalData')}
+                    type='text'
+                    placeholder='Your personal Info'
+                    className='border border-gray-300 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400 transition w-full'
+                  />
+                  {errors.personalData && (
+                    <span className='text-sm text-red-500'>{errors.personalData.message}</span>
+                  )}{' '}
+                </div>
+
+                <div>
+                  <p className='text-sm pb-[2px]'>Favourite Sports and Game</p>
+                  {allhobies.fields.length > 0 ? (
+                    allhobies.fields.map((feild, index) => (
+                      <div key={index} className=''>
+                        <div className='flex items-center gap-4 mb-4'>
+                          <div className='w-full'>
+                            <input
+                              type='text'
+                              {...register(`multihobby.${index}.game`)}
+                              placeholder='Game Name'
+                              className='border border-gray-300 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400 transition w-full'
+                            />
+                            <div className='h-5 text-red-500 text-sm'>
+                              {errors.multihobby?.[index]?.game?.message}
+                            </div>
+                          </div>
+
+                          <div className='w-full'>
+                            <input
+                              type='text'
+                              {...register(`multihobby.${index}.favouritePlayer`)}
+                              placeholder='Favourite Player'
+                              className='border border-gray-300 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400 transition w-full'
+                            />
+
+                            <div className='h-5 text-red-500 text-sm'>
+                              {errors.multihobby?.[index]?.favouritePlayer?.message}
+                            </div>
+                          </div>
+
+                          <div>
+                            <Trash
+                              onClick={() => allhobies.remove(index)}
+                              size={24}
+                              className='cursor-pointer'
+                              color='#FF0000'
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className='text-md text-gray-500 my-3'>Add Some hobbies if you want ...</p>
+                  )}
+
+                  {errors.multihobby && (
+                    <p className='text-red-500 font-bold text-sm mb-2'>
+                      {' '}
+                      {errors.multihobby.message}
+                    </p>
+                  )}
+
+                  <div>
+                    <button
+                      type='button'
+                      onClick={addNewHobby}
+                      className='w-[130px] p-2 bg-green-500 text-white rounded-2xl cursor-pointer'
+                    >
+                      Add More
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           {extraDetails === 'education' && (
             <div>
